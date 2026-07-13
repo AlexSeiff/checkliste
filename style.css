@@ -1,0 +1,194 @@
+:root {
+  --paper: #f4f4ef;   /* Hintergrund: kühles Papier */
+  --card: #ffffff;    /* Zeilen */
+  --ink: #1d2733;     /* Text: Tinte */
+  --muted: #8a93a3;   /* Nebentext */
+  --pen: #2456e6;     /* Akzent: Kugelschreiber-Blau */
+  --danger: #c0392b;  /* Löschen */
+  --line: #e3e4dd;    /* Trennlinien */
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- Kopfzeile ---------- */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top)); /* Platz für die iPhone-Notch */
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+h1 {
+  flex: 1;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+#back-btn {
+  border: none;
+  background: none;
+  color: var(--pen);
+  font-size: 1.7rem;
+  line-height: 1;
+  padding: 4px 12px 4px 2px;
+  cursor: pointer;
+}
+
+#clear-done-btn {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* ---------- Liste ---------- */
+main {
+  flex: 1;
+  padding: 12px 16px;
+  /* unten Platz lassen, damit die fixe Eingabezeile nichts verdeckt */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+ul { list-style: none; display: grid; gap: 8px; }
+
+.row {
+  display: flex;
+  align-items: stretch;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.row-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;          /* großzügige Touch-Fläche */
+  padding: 14px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.checkbox {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: transparent;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.done .checkbox {
+  background: var(--pen);
+  border-color: var(--pen);
+  color: #fff;
+}
+
+.item-text { transition: color 0.15s; }
+
+.done .item-text {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums; /* Ziffern gleich breit -> ruhiges Bild */
+}
+
+.delete {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 1.4rem;
+  padding: 0 16px;
+  cursor: pointer;
+}
+
+.delete:active { color: var(--danger); }
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 48px 16px;
+}
+
+/* ---------- Eingabezeile unten ---------- */
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* Home-Indikator */
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+}
+
+#new-entry {
+  flex: 1;
+  font-size: 1rem; /* mind. 16px, sonst zoomt iOS beim Antippen ins Feld */
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+}
+
+#new-entry:focus {
+  outline: 2px solid var(--pen);
+  border-color: var(--pen);
+}
+
+#add-btn {
+  width: 48px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--pen);
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+#add-btn:active { transform: scale(0.96); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

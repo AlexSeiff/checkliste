@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Checkliste</title>
+
+  <!-- PWA: Manifest verknüpfen + Farbe der Browser-/Statusleiste -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f4f4ef">
+
+  <!-- iOS versteht das Manifest nur teilweise und braucht eigene Tags -->
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Checkliste">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <button id="back-btn" hidden aria-label="Zurück">‹</button>
+    <h1 id="title">Meine Listen</h1>
+    <button id="clear-done-btn" hidden>Erledigte löschen</button>
+  </header>
+
+  <main>
+    <ul id="list-container"></ul>
+  </main>
+
+  <footer>
+    <input id="new-entry" type="text" placeholder="Neue Liste…"
+           autocomplete="off" enterkeyhint="done">
+    <button id="add-btn" aria-label="Hinzufügen">+</button>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
