@@ -1,7 +1,7 @@
 {
-  "name": "Checkliste",
-  "short_name": "Checkliste",
-  "description": "Einfache Checklisten – offline, ohne Konto.",
+  "name": "Opas Haushalt",
+  "short_name": "Opa-Check",
+  "description": "Besuchs-Routine, Einkaufsliste und Mülltermine für Opas Haushalt – offline, ohne Konto.",
   "lang": "de",
   "start_url": "./",
   "scope": "./",
