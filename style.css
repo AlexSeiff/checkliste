@@ -413,3 +413,100 @@ footer[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* ============================================================
+   v3: Gewicht, Termine, Notizen, Teilen
+   ============================================================ */
+
+/* Warnkarte (Gewicht > 75 kg) */
+.warn-card {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: #fdecec;
+  border-color: #f0c6c6;
+  cursor: pointer;
+}
+
+div.warn-card { cursor: default; }
+
+.warn-title { font-weight: 700; color: #8f1f1f; line-height: 1.4; }
+.warn-sub { color: #a95555; font-size: 0.85rem; margin-top: 4px; }
+
+/* Kartenkopf mit Bearbeiten-Link */
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.card-head .card-title { margin-bottom: 0; }
+
+.edit-link {
+  border: none;
+  background: none;
+  color: var(--pen);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Zeilen ohne Klick-Funktion */
+.row-main.static { cursor: default; }
+
+/* Gewichtsliste */
+.weight-kg { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.weight-diff {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.weight-diff.up { color: #b45309; font-weight: 600; }
+
+/* Termin-Formular & -Zeilen */
+.event-form { display: grid; gap: 8px; margin-bottom: 16px; }
+
+.field {
+  width: 100%;
+  font-size: 1rem;
+  font-family: inherit;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.field:focus { outline: 2px solid var(--pen); border-color: var(--pen); }
+
+.event-form .btn { margin-top: 0; }
+
+.event-info { flex: 1; min-width: 0; }
+.event-text { font-weight: 600; }
+
+.section-label {
+  margin: 18px 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Werkzeugleiste (Einkaufsliste) */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Notizen & Hinweise */
+.note-text { line-height: 1.45; padding: 2px 0; }
+.hint { margin-bottom: 12px; }

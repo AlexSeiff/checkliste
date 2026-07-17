@@ -119,7 +119,7 @@ const ROUTINE = [
 // Schnell-Vorschläge für die Einkaufsliste (aus den beiden Check-Schritten)
 const EINKAUF_VORSCHLAEGE = ROUTINE.filter((s) => s.einkauf).flatMap((s) => s.items);
 
-// Karte „Gut zu wissen“ auf der Übersicht
+// Start-Einträge für „Gut zu wissen“ – nach dem ersten App-Start direkt in der App editierbar
 const INFOS = [
   { icon: "🩺", text: "Fr. Dr. Keil ist im Urlaub: 20.07. bis 10.08." },
   { icon: "📞", text: "Bei Sorge wegen der Gesundheit: anrufen oder hinfahren – jede erste Stunde der Öffnungszeit ist eine Notfallsprechstunde." },
