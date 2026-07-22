@@ -1,5 +1,5 @@
 // Bei JEDER Änderung an der App diese Versionsnummer hochzählen (v2 -> v3 -> ...)
-const CACHE_NAME = "opas-haushalt-v3";
+const CACHE_NAME = "opas-haushalt-v4";
 
 const ASSETS = [
   "./",
