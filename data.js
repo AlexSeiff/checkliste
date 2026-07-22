@@ -45,12 +45,13 @@ const ROUTINE = [
       "Kekse",
       "Pfefferminztee",
       "Kaffee",
+      "Trinknahrung",
     ],
   },
   {
     id: "bad",
     title: "Bad: fragen und nachgucken",
-    detail: "Fehlendes wieder mit dem Korb-Knopf auf die Einkaufsliste setzen.",
+    detail: "Fehlendes wieder mit dem Korb-Knopf auf die Einkaufsliste setzen. Kosmetikartikel beschriftet ? (Kreppband und Stift liegt im Keller)",
     einkauf: true,
     items: [
       "Duschbad",
@@ -61,6 +62,8 @@ const ROUTINE = [
       "Toilettenpapier",
       "Handseife oben",
       "Handseife unten",
+      "Tagescreme",
+      "Spraydose (Panthenol)"
     ],
   },
   {
