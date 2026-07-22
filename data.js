@@ -49,6 +49,19 @@ const ROUTINE = [
     ],
   },
   {
+    id: "haushalt",
+    title: "Haushaltsartikel überprüfen",
+    detail: "Gucken ob genug da ist, auch im Keller auf Vorrat, wenn nicht auffüllen oder auf die Liste setzen. ",
+     einkauf: true,
+    items: [
+      "Taschentücher",
+      "Toilettenpapier",
+      "Handseife oben",
+      "Handseife unten",
+      "Mülltüten",
+    ],
+  },
+  {
     id: "bad",
     title: "Bad: fragen und nachgucken",
     detail: "Fehlendes wieder mit dem Korb-Knopf auf die Einkaufsliste setzen. Kosmetikartikel beschriftet ? (Kreppband und Stift liegt im Keller)",
@@ -58,10 +71,6 @@ const ROUTINE = [
       "Gebissreiniger",
       "Zahncreme",
       "Creme",
-      "Taschentücher",
-      "Toilettenpapier",
-      "Handseife oben",
-      "Handseife unten",
       "Tagescreme",
       "Spraydose (Panthenol)"
     ],
