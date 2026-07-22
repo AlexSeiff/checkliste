@@ -52,7 +52,7 @@ const ROUTINE = [
     id: "haushalt",
     title: "Haushaltsartikel überprüfen",
     detail: "Gucken ob genug da ist, auch im Keller auf Vorrat, wenn nicht auffüllen oder auf die Liste setzen. ",
-     einkauf: true,
+    einkauf: true,
     items: [
       "Taschentücher",
       "Toilettenpapier",
