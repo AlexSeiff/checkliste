@@ -64,7 +64,7 @@ const ROUTINE = [
   {
     id: "bad",
     title: "Bad: fragen und nachgucken",
-    detail: "Fehlendes wieder mit dem Korb-Knopf auf die Einkaufsliste setzen. Kosmetikartikel beschriftet ? (Kreppband und Stift liegt im Keller)",
+    detail: "Fehlendes wieder mit dem Korb-Knopf auf die Einkaufsliste setzen. Kosmetikartikel beschriftet ? (Kreppband und Stift liegt im Keller) Beim Kontrollieren gleich sortieren: Zahnputzartikel zusammen (möglichst in den Schrank, oberstes Fach), Rasierartikel zusammen (möglichst Schrank, 2. Fach), Deo „Beine“ und „Gesicht“ auf das Bord über dem Waschbecken. Vorräte in die Schublade.",
     einkauf: true,
     items: [
       "Duschbad",
@@ -93,7 +93,7 @@ const ROUTINE = [
   {
     id: "muell",
     title: "Müll checken",
-    detail: "Meist ist der Plastemüll voll (die hintere Abteilung). Die Tonne steht vor der Garage. Hier die nächsten Abholtermine:",
+    detail: "Meist ist der Plastemüll voll (die hintere Abteilung). Die Tonne steht vor der Garage. Danach die Plastemüll-Schublade leeren und sofort eine neue Mülltüte einsetzen!!! Sonst gibt es Glibberschlabber. Hier die nächsten Abholtermine:",
     dynamic: "muell",
   },
   {
@@ -109,7 +109,7 @@ const ROUTINE = [
   {
     id: "floradix",
     title: "Floradix geben",
-    detail: "Der Saft mit Eisen – steht auf dem Fensterbrett.",
+    detail: "Der Saft mit Eisen – steht auf dem Fensterbrett. Zusammen mit Magnesium Verde anmixen, mit Leitungswasser.",
   },
   {
     id: "waesche",
