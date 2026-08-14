@@ -1,12 +1,75 @@
+/* ============================================================
+   Opas Haushalt – Gestaltung
+   Alle Farben laufen über Variablen, damit der Dunkelmodus
+   weiter unten nur die Werte tauschen muss.
+   ============================================================ */
+
 :root {
+  color-scheme: light dark;
+
   --paper: #f4f4ef;   /* Hintergrund: kühles Papier */
   --card: #ffffff;    /* Karten & Zeilen */
   --ink: #1d2733;     /* Text: Tinte */
-  --muted: #8a93a3;   /* Nebentext */
+  --muted: #666e7c;   /* Nebentext – 4,7:1 auf Papier, 5,1:1 auf Karte */
   --pen: #2456e6;     /* Akzent: Kugelschreiber-Blau */
+  --on-pen: #ffffff;  /* Text auf dem Akzent */
   --danger: #c0392b;  /* Löschen */
   --line: #e3e4dd;    /* Trennlinien */
+
+  --hero-bg: #eef3ff; /* Karte der Besuchs-Routine */
+  --hero-line: #cfdcff;
+
+  --badge-bg: #fdf3d7;
+  --badge-ink: #7a4f00;
+  --badge-line: #eddfae;
+
+  --warn-bg: #fdecec;
+  --warn-line: #f0c6c6;
+  --warn-ink: #8f1f1f;
+  --warn-sub: #9a4a4a;
+
+  --note-bg: #fdf7e6;
+  --note-line: #eee0b8;
+  --note-ink: #7a5200;
+  --note-sub: #8a6a2a;
+
+  --up: #b45309;           /* Gewichtszunahme */
+  --toast-accent: #8fb4ff; /* Akzent auf dem dunklen Toast */
+
   --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14171c;
+    --card: #1e232b;
+    --ink: #e8ecf2;
+    --muted: #98a3b3;
+    --pen: #86a9ff;
+    --on-pen: #10141a;
+    --danger: #ff6b5c;
+    --line: #2d343f;
+
+    --hero-bg: #1d2740;
+    --hero-line: #2f3f63;
+
+    --badge-bg: #3a2f12;
+    --badge-ink: #f0d189;
+    --badge-line: #4d3f18;
+
+    --warn-bg: #3a1f1f;
+    --warn-line: #562c2c;
+    --warn-ink: #ffb4ac;
+    --warn-sub: #d99a95;
+
+    --note-bg: #33290f;
+    --note-line: #4a3c17;
+    --note-ink: #f3d79a;
+    --note-sub: #c9b183;
+
+    --up: #f0a95c;
+    --toast-accent: #2456e6;
+  }
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,21 +109,31 @@ h1 {
   text-overflow: ellipsis;
 }
 
+/* Tap-Fläche mindestens 44px – oben links kommt der Daumen ohnehin schlecht hin */
 #back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin-left: -10px;
   border: none;
   background: none;
   color: var(--pen);
   font-size: 1.7rem;
   line-height: 1;
-  padding: 4px 12px 4px 2px;
   cursor: pointer;
 }
+
+/* muss sein: das display:flex oben sticht sonst das hidden-Attribut aus */
+#back-btn[hidden] { display: none; }
 
 #header-action {
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--muted);
   font-size: 0.8rem;
+  min-height: 40px;
   padding: 8px 12px;
   border-radius: 999px;
   cursor: pointer;
@@ -75,6 +148,13 @@ main {
   margin: 0 auto;
   padding: 14px 16px;
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+main.view-in { animation: view-in 0.18s ease-out; }
+
+@keyframes view-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
 }
 
 .card {
@@ -98,20 +178,74 @@ main {
 .small { font-size: 0.85rem; }
 .center { text-align: center; }
 
-/* Navigations-Karten (Einkaufsliste, eigene Listen) */
-.nav-card {
+.hint-top {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- Besuchs-Routine auf der Übersicht ---------- */
+/* Bekommt bewusst mehr Gewicht als alles andere – dafür macht man die App auf. */
+.hero {
+  background: var(--hero-bg);
+  border-color: var(--hero-line);
+  padding: 20px 18px;
+}
+
+.hero-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--pen);
+  margin-bottom: 6px;
+}
+
+.hero-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.hero-sub {
+  color: var(--muted);
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+.hero .progress { margin: 14px 0 2px; }
+.hero .btn { margin-top: 14px; padding: 16px; }
+
+/* ---------- Navigationsgruppe (Termine, Einkauf, Gewicht, Listen) ---------- */
+.nav-group {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.nav-row {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-height: 60px;
+  padding: 12px 16px;
+  border: none;
+  background: none;
   font: inherit;
   color: inherit;
   text-align: left;
   cursor: pointer;
 }
 
-.nav-title { font-weight: 600; font-size: 1.05rem; margin-bottom: 2px; }
+.nav-row + .nav-row { border-top: 1px solid var(--line); }
+.nav-row:active { background: var(--hero-bg); }
+
+.nav-title { font-weight: 600; font-size: 1.02rem; margin-bottom: 2px; }
 .chevron { color: var(--muted); font-size: 1.6rem; line-height: 1; }
 
 /* Mülltonnen */
@@ -129,9 +263,9 @@ main {
 .abfuhr-label { font-weight: 600; }
 
 .badge {
-  background: #fdf3d7;
-  color: #8a5a00;
-  border: 1px solid #eddfae;
+  background: var(--badge-bg);
+  color: var(--badge-ink);
+  border: 1px solid var(--badge-line);
   font-size: 0.72rem;
   font-weight: 700;
   padding: 4px 8px;
@@ -162,7 +296,7 @@ main {
   cursor: pointer;
 }
 
-.btn.primary { background: var(--pen); color: #fff; font-size: 1.05rem; }
+.btn.primary { background: var(--pen); color: var(--on-pen); font-size: 1.05rem; }
 .btn.primary:active { transform: scale(0.98); }
 .btn.ghost { background: none; border: 1px solid var(--line); color: var(--muted); }
 
@@ -213,7 +347,7 @@ main {
   margin: 6px auto 14px;
   border-radius: 50%;
   background: var(--pen);
-  color: #fff;
+  color: var(--on-pen);
   display: grid;
   place-items: center;
   font-size: 1.7rem;
@@ -236,6 +370,7 @@ main {
   font: inherit;
   font-size: 0.9rem;
   font-weight: 600;
+  min-height: 40px;
   padding: 2px 0 12px;
   cursor: pointer;
 }
@@ -300,13 +435,14 @@ ul { list-style: none; display: grid; gap: 8px; }
   color: transparent;
   font-size: 0.9rem;
   font-weight: 700;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
 }
 
 .done .checkbox {
   background: var(--pen);
   border-color: var(--pen);
-  color: #fff;
+  color: var(--on-pen);
+  transform: scale(1.08);
 }
 
 .item-text { transition: color 0.15s; }
@@ -377,28 +513,28 @@ footer[hidden] { display: none; }
   border: none;
   border-radius: var(--radius);
   background: var(--pen);
-  color: #fff;
+  color: var(--on-pen);
   font-size: 1.5rem;
   cursor: pointer;
 }
 
 #add-btn:active { transform: scale(0.96); }
 
-/* ---------- Toast ---------- */
+/* ---------- Toast (mit optionalem "Rückgängig") ---------- */
 #toast {
   position: fixed;
   left: 50%;
   bottom: calc(84px + env(safe-area-inset-bottom));
   transform: translateX(-50%) translateY(8px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
   background: var(--ink);
   color: var(--paper);
   padding: 10px 16px;
   border-radius: 999px;
   font-size: 0.9rem;
-  max-width: 90vw;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: 92vw;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s, transform 0.2s;
@@ -410,28 +546,59 @@ footer[hidden] { display: none; }
   transform: translateX(-50%) translateY(0);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
+#toast.with-undo.show { pointer-events: auto; }
+
+.toast-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast-undo {
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--toast-accent);
+  font: inherit;
+  font-weight: 700;
+  padding: 4px 0;
+  cursor: pointer;
 }
 
 /* ============================================================
-   v3: Gewicht, Termine, Notizen, Teilen
+   Gewicht, Termine, Notizen, Sicherung
    ============================================================ */
 
-/* Warnkarte (Gewicht > 75 kg) */
+/* Warnkarte (Gewicht) */
 .warn-card {
   width: 100%;
   text-align: left;
   font: inherit;
-  background: #fdecec;
-  border-color: #f0c6c6;
+  background: var(--warn-bg);
+  border-color: var(--warn-line);
   cursor: pointer;
 }
 
 div.warn-card { cursor: default; }
 
-.warn-title { font-weight: 700; color: #8f1f1f; line-height: 1.4; }
-.warn-sub { color: #a95555; font-size: 0.85rem; margin-top: 4px; }
+.warn-title { font-weight: 700; color: var(--warn-ink); line-height: 1.4; }
+.warn-sub { color: var(--warn-sub); font-size: 0.85rem; margin-top: 4px; line-height: 1.4; }
+
+/* Hinweiskarte – gleiche Form, weniger Alarm */
+.note-card {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: var(--note-bg);
+  border-color: var(--note-line);
+  cursor: pointer;
+}
+
+div.note-card { cursor: default; }
+
+.note-title { font-weight: 700; color: var(--note-ink); line-height: 1.4; }
+.note-sub { color: var(--note-sub); font-size: 0.85rem; margin-top: 4px; line-height: 1.4; }
 
 /* Kartenkopf mit Bearbeiten-Link */
 .card-head {
@@ -451,7 +618,7 @@ div.warn-card { cursor: default; }
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
-  padding: 0;
+  padding: 4px 0;
   cursor: pointer;
 }
 
@@ -467,7 +634,7 @@ div.warn-card { cursor: default; }
   font-variant-numeric: tabular-nums;
 }
 
-.weight-diff.up { color: #b45309; font-weight: 600; }
+.weight-diff.up { color: var(--up); font-weight: 600; }
 
 /* Termin-Formular & -Zeilen */
 .event-form { display: grid; gap: 8px; margin-bottom: 16px; }
@@ -484,6 +651,8 @@ div.warn-card { cursor: default; }
 }
 
 .field:focus { outline: 2px solid var(--pen); border-color: var(--pen); }
+
+.textarea { resize: vertical; line-height: 1.4; }
 
 .event-form .btn { margin-top: 0; }
 
@@ -510,3 +679,34 @@ div.warn-card { cursor: default; }
 /* Notizen & Hinweise */
 .note-text { line-height: 1.45; padding: 2px 0; }
 .hint { margin-bottom: 12px; }
+
+/* Sicherung */
+.backup-stats { margin: 12px 0 4px; }
+
+.file-input {
+  display: block;
+  width: 100%;
+  margin: 12px 0 4px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.file-input::file-selector-button {
+  font: inherit;
+  font-weight: 600;
+  margin-right: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--pen);
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, main.view-in {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -1,5 +1,5 @@
 // Bei JEDER Änderung an der App diese Versionsnummer hochzählen (v2 -> v3 -> ...)
-const CACHE_NAME = "opas-haushalt-v5";
+const CACHE_NAME = "opas-haushalt-v6";
 
 const ASSETS = [
   "./",
@@ -30,8 +30,31 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Erst Netz, dann Cache.
+// Vorher war es umgekehrt – dadurch brauchte jede Änderung zwei App-Starts,
+// bis sie zu sehen war. Offline funktioniert die App weiterhin, dann greift
+// einfach der Cache-Zweig.
 self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+  if (new URL(req.url).origin !== self.location.origin) return;
+
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    fetch(req)
+      .then((res) => {
+        if (res && res.ok) {
+          const kopie = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, kopie));
+        }
+        return res;
+      })
+      .catch(() =>
+        caches.match(req).then((cached) => {
+          if (cached) return cached;
+          // Seitenaufruf ohne Netz und ohne passenden Eintrag: Startseite liefern
+          if (req.mode === "navigate") return caches.match("./index.html");
+          return Response.error();
+        })
+      )
   );
 });
