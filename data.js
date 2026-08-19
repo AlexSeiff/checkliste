@@ -45,7 +45,8 @@ const ROUTINE = [
       "Kekse",
       "Pfefferminztee",
       "Kaffee",
-      "Trinknahrung",
+      "Magnesium",
+      "Mülltüten"
     ],
   },
   {
@@ -108,7 +109,7 @@ const ROUTINE = [
   },
   {
     id: "floradix",
-    title: "Floradix geben",
+    title: "Floradix/Magnesium geben",
     detail: "Der Saft mit Eisen – steht auf dem Fensterbrett. Zusammen mit Magnesium Verde anmixen, mit Leitungswasser.",
   },
   {
