@@ -47,6 +47,7 @@ const ROUTINE = [
       "Mülltüten",
       "Waschmittel",
       "Fit (Spülmittel)",
+      "Geschirrspültabs",
     ],
   },
   {
