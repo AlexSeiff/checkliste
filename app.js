@@ -766,12 +766,12 @@ function kalenderBox() {
     box.append(row);
   }
 
-  // Liegt ein 15. in der nächsten Woche? Dann ist Bettwäsche dran.
+  // Liegt ein 15. in der nächsten Woche? Dann sind Bettwäsche und Zahnbürste dran.
   for (let d = alsDatum(woche.von); dateStr(d) <= woche.bis; d.setDate(d.getDate() + 1)) {
     if (d.getDate() !== 15) continue;
     const hinweis = el("div", "card note-card kalender-hinweis");
     hinweis.append(el("div", "note-title", "🛏️ " + fmtDate(dateStr(d)) + " ist der 15."));
-    hinweis.append(el("div", "note-sub", "Bettwäsche wechseln mit eintragen!"));
+    hinweis.append(el("div", "note-sub", "Bettwäsche wechseln und Zahnbürste wechseln mit eintragen!"));
     box.append(hinweis);
   }
 

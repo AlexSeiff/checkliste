@@ -112,7 +112,7 @@ const ROUTINE = [
     punkte: [
       "3× Pullover und Hemd wechseln – gut über die Woche verteilt",
       "1× Hose waschen",
-      "Einmal im Monat, immer am 15.: Bettwäsche wechseln",
+      "Einmal im Monat, immer am 15.: Bettwäsche wechseln und Zahnbürste wechseln",
     ],
     dynamic: "kalender",
   },
