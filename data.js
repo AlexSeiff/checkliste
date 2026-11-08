@@ -6,24 +6,9 @@
 
 const ROUTINE = [
   {
-    id: "ankommen",
-    title: "Getränk & Kleinigkeit hinstellen",
-    detail: "Zu trinken hinstellen, gern geschnittenes Obst dazu (Apfelspalten nochmal halbieren – eher Würfel) oder einen Keks. 5 Minuten reden.",
-  },
-  {
-    id: "alles-ok",
-    title: "Fragen: Ist alles ok?",
-    detail: "Kurz nachhören, wie es Opa geht und ob irgendwas ansteht.",
-  },
-  {
     id: "hoerbuch",
     title: "Fragen: Hörbuch?",
     detail: "Möchte Opa (weiter) Hörbuch hören?",
-  },
-  {
-    id: "joghurt",
-    title: "Joghurt für morgen anmischen",
-    detail: "„So! Ich mix dir deinen Joghurt“ – ohne Laktose, Süßkramobst, bisschen Chia-Samen. Mit Löffel in den Kühlschrank für morgen.",
   },
   {
     id: "lebensmittel",
@@ -45,8 +30,8 @@ const ROUTINE = [
       "Kekse",
       "Pfefferminztee",
       "Kaffee",
-      "Magnesium",
-      "Mülltüten"
+      "Kaffeefilter",
+      "Magnesium"
     ],
   },
   {
@@ -60,6 +45,8 @@ const ROUTINE = [
       "Handseife oben",
       "Handseife unten",
       "Mülltüten",
+      "Waschmittel",
+      "Fit (Spülmittel)",
     ],
   },
   {
@@ -69,11 +56,11 @@ const ROUTINE = [
     einkauf: true,
     items: [
       "Duschbad",
+      "Shampoo",
       "Gebissreiniger",
       "Zahncreme",
       "Creme",
-      "Tagescreme",
-      "Spraydose (Panthenol)"
+      "Tagescreme"
     ],
   },
   {
@@ -103,19 +90,9 @@ const ROUTINE = [
     detail: "Bei einem Spaziergang nach 16:30 Uhr: Zettel für den Pflegedienst hinlegen, dass ihr unterwegs seid. Kleinen roten Eierbecher für die Medis hinstellen. Smiley zeichnen ;)",
   },
   {
-    id: "wiegen",
-    title: "Wiegen (jeden 2. Tag) & Beine checken",
-    detail: "Zunahme ist meist Wassereinlagerung – und die ist gefährlich. Beine dick? Also superdick? Ab 75 kg Mama wegen der Medis aus dem Korb fragen, erst mit Brennnesseltee versuchen ;) Wirkt sowieso frühestens am Folgetag.",
-  },
-  {
     id: "floradix",
-    title: "Floradix/Magnesium geben",
-    detail: "Der Saft mit Eisen – steht auf dem Fensterbrett. Zusammen mit Magnesium Verde anmixen, mit Leitungswasser.",
-  },
-  {
-    id: "waesche",
-    title: "Bei Bedarf: Wäsche waschen",
-    detail: "Wichtig: erst den Wasserhahn für die Waschmaschine aufdrehen! Am besten dabeibleiben, bis die Maschine richtig losläuft.",
+    title: "Nahrungsergänzungsmittel checken",
+    detail: "Stehen auf dem Fensterbrett.",
   },
   {
     id: "rundgang",
@@ -127,16 +104,42 @@ const ROUTINE = [
     title: "Ladekabel-Check",
     detail: "Das Kabel für Handy und Tablet hat einen weißen Bauch. Es liegt in der Küche bei der Kaffeemaschine oder bei Opas Sessel in der Leiste. Steckt es in der Dose, sieht man es nicht – weil der weiße Bauch dann weg ist ;)",
   },
+  {
+    id: "kalender",
+    title: "Kalender für nächste Woche checken",
+    detail: "Welche Termine stehen nächste Woche an? Danach die Wäsche für die Woche als Text in den Kalender eintragen:",
+    punkte: [
+      "3× Pullover und Hemd wechseln – gut über die Woche verteilt",
+      "1× Hose waschen",
+      "Einmal im Monat, immer am 15.: Bettwäsche wechseln",
+    ],
+    dynamic: "kalender",
+  },
 ];
 
 // Schnell-Vorschläge für die Einkaufsliste (aus den beiden Check-Schritten)
 const EINKAUF_VORSCHLAEGE = ROUTINE.filter((s) => s.einkauf).flatMap((s) => s.items);
 
 // Start-Einträge für „Gut zu wissen“ – nach dem ersten App-Start direkt in der App editierbar
+// "key" muss eindeutig bleiben: Daran erkennt die App, welche Einträge schon
+// einmal eingespielt wurden. Neue Einträge landen so auch bei bestehenden
+// Installationen oben in der Liste – gelöschte kommen aber nicht zurück.
+// Telefonnummern im Text werden automatisch zum Antippen (Anrufen/Kopieren).
 const INFOS = [
-  { icon: "🩺", text: "Fr. Dr. Keil ist im Urlaub: 20.07. bis 10.08." },
-  { icon: "📞", text: "Bei Sorge wegen der Gesundheit: anrufen oder hinfahren – jede erste Stunde der Öffnungszeit ist eine Notfallsprechstunde." },
-  { icon: "⚖️", text: "Jeden 2. Tag wiegen – die Gewichtsliste kommt separat." },
+  { key: "notfallknopf", icon: "🚨", text: "Notfall und keine Ahnung, was zu tun ist? Den blauen Knopf am Notfallarmband drücken (im Flur)." },
+  { key: "keil-telefon", icon: "☎️", text: "Fr. Dr. Keil: 030 6480902" },
+  { key: "sprechstunde", icon: "📞", text: "Bei Sorge wegen der Gesundheit: anrufen oder hinfahren – jede erste Stunde der Öffnungszeit ist eine Notfallsprechstunde." },
+];
+
+// Diese Einträge gab es schon vor dem "key"-System – wer die App da schon
+// benutzt hat, hat sie bereits (oder bewusst gelöscht).
+const INFOS_ALT = ["sprechstunde"];
+
+// Überholte Einträge, die auf bestehenden Geräten einmalig gelöscht werden.
+// "steckt" ist ein Textstück, an dem der Eintrag erkannt wird.
+const INFOS_ENTFERNT = [
+  { key: "keil-urlaub", steckt: "Fr. Dr. Keil ist im Urlaub" },
+  { key: "wiegen", steckt: "Jeden 2. Tag wiegen" },
 ];
 
 // Abfuhrtermine (aus Abfuhrkalender.ics der BSR generiert, bis 30.12.2026)

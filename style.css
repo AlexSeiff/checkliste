@@ -23,17 +23,12 @@
   --badge-ink: #7a4f00;
   --badge-line: #eddfae;
 
-  --warn-bg: #fdecec;
-  --warn-line: #f0c6c6;
-  --warn-ink: #8f1f1f;
-  --warn-sub: #9a4a4a;
 
   --note-bg: #fdf7e6;
   --note-line: #eee0b8;
   --note-ink: #7a5200;
   --note-sub: #8a6a2a;
 
-  --up: #b45309;           /* Gewichtszunahme */
   --toast-accent: #8fb4ff; /* Akzent auf dem dunklen Toast */
 
   --radius: 12px;
@@ -57,17 +52,12 @@
     --badge-ink: #f0d189;
     --badge-line: #4d3f18;
 
-    --warn-bg: #3a1f1f;
-    --warn-line: #562c2c;
-    --warn-ink: #ffb4ac;
-    --warn-sub: #d99a95;
 
     --note-bg: #33290f;
     --note-line: #4a3c17;
     --note-ink: #f3d79a;
     --note-sub: #c9b183;
 
-    --up: #f0a95c;
     --toast-accent: #2456e6;
   }
 }
@@ -217,7 +207,7 @@ main.view-in { animation: view-in 0.18s ease-out; }
 .hero .progress { margin: 14px 0 2px; }
 .hero .btn { margin-top: 14px; padding: 16px; }
 
-/* ---------- Navigationsgruppe (Termine, Einkauf, Gewicht, Listen) ---------- */
+/* ---------- Navigationsgruppe (Termine, Einkauf, Listen) ---------- */
 .nav-group {
   background: var(--card);
   border: 1px solid var(--line);
@@ -567,25 +557,10 @@ footer[hidden] { display: none; }
 }
 
 /* ============================================================
-   Gewicht, Termine, Notizen, Sicherung
+   Termine, Notizen, Sicherung
    ============================================================ */
 
-/* Warnkarte (Gewicht) */
-.warn-card {
-  width: 100%;
-  text-align: left;
-  font: inherit;
-  background: var(--warn-bg);
-  border-color: var(--warn-line);
-  cursor: pointer;
-}
-
-div.warn-card { cursor: default; }
-
-.warn-title { font-weight: 700; color: var(--warn-ink); line-height: 1.4; }
-.warn-sub { color: var(--warn-sub); font-size: 0.85rem; margin-top: 4px; line-height: 1.4; }
-
-/* Hinweiskarte – gleiche Form, weniger Alarm */
+/* Hinweiskarte (z. B. Bettwäsche am 15.) */
 .note-card {
   width: 100%;
   text-align: left;
@@ -624,17 +599,6 @@ div.note-card { cursor: default; }
 
 /* Zeilen ohne Klick-Funktion */
 .row-main.static { cursor: default; }
-
-/* Gewichtsliste */
-.weight-kg { font-weight: 600; font-variant-numeric: tabular-nums; }
-
-.weight-diff {
-  color: var(--muted);
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.weight-diff.up { color: var(--up); font-weight: 600; }
 
 /* Termin-Formular & -Zeilen */
 .event-form { display: grid; gap: 8px; margin-bottom: 16px; }
@@ -703,6 +667,119 @@ div.note-card { cursor: default; }
   color: var(--pen);
   cursor: pointer;
 }
+
+/* ============================================================
+   Schritt-Übersicht, Kalender-Schritt, Telefonnummern
+   ============================================================ */
+
+/* Kopf über der Schritt-Karte: Fortschritt + "Alle Schritte" */
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.step-head .progress { flex: 1; margin: 0; }
+
+.step-overview-link {
+  flex: none;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--pen);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-height: 40px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.step-badge { display: inline-block; margin-bottom: 10px; }
+
+.step-points {
+  display: block;
+  list-style: disc;
+  padding-left: 1.3em;
+  margin: 8px 0 4px;
+  line-height: 1.55;
+}
+
+.step-points li + li { margin-top: 4px; }
+
+/* Liste aller Schritte */
+.step-num {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.step-row-info { flex: 1; min-width: 0; }
+.step-row-info .item-text { font-weight: 600; }
+
+.step-row.done .step-num {
+  background: var(--pen);
+  border-color: var(--pen);
+  color: var(--on-pen);
+}
+
+.step-row.skipped .step-num { border-style: dashed; }
+
+.step-row.current {
+  border-color: var(--pen);
+  box-shadow: 0 0 0 1px var(--pen);
+  background: var(--hero-bg);
+}
+
+.step-row.current .step-num { border-color: var(--pen); color: var(--pen); }
+
+.step-list + .btn { margin-top: 14px; }
+
+/* Kalender-Schritt */
+.kalender-box {
+  margin-top: 14px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
+.kalender-label { margin-top: 10px; }
+.kalender-hinweis { margin: 10px 0 0; padding: 12px 14px; }
+.kalender-box .chips-toggle { padding-top: 10px; padding-bottom: 0; }
+
+/* Telefonnummern in "Gut zu wissen" */
+.tel-link {
+  color: var(--pen);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.tel-copy {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  margin-left: 2px;
+  vertical-align: 1px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.tel-copy:active { color: var(--pen); border-color: var(--pen); }
 
 @media (prefers-reduced-motion: reduce) {
   *, main.view-in {

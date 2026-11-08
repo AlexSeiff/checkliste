@@ -1,5 +1,5 @@
 // ============================================================
-// Opas Haushalt – App-Logik (v6)
+// Opas Haushalt – App-Logik (v7)
 // ============================================================
 
 // ---- 1. Datenhaltung (localStorage) ----
@@ -13,9 +13,9 @@ function leereDaten() {
     lists: [],       // eigene Listen
     shopping: [],    // Einkaufsliste
     run: null,       // heutiger Routine-Durchlauf
-    weights: [],     // Gewichtsliste [{ id, date, kg }], neueste zuerst
     events: [],      // eigene Termine [{ id, date, text }]
     notes: [],       // "Gut zu wissen"
+    infosGesehen: [], // keys aus INFOS, die schon einmal eingespielt wurden
   };
 }
 
@@ -27,11 +27,42 @@ function normalisiere(d) {
       else if (Array.isArray(d[k])) n[k] = d[k];
     }
   }
-  // Gewichte immer neueste zuerst – die Differenz-Anzeige verlässt sich darauf
-  n.weights.sort((a, b) => b.date.localeCompare(a.date));
   // Durchläufe aus älteren App-Versionen kennen die Unterpunkte noch nicht
   if (n.run && typeof n.run.sub !== "object") n.run.sub = {};
+  // Daten von vor dem "key"-System: die alten Start-Infos sind schon drin
+  if (d && typeof d === "object" && !Array.isArray(d.infosGesehen)) {
+    n.infosGesehen = [...INFOS_ALT];
+  }
   return n;
+}
+
+// Neue "Gut zu wissen"-Einträge aus data.js oben einsortieren – jeder nur einmal,
+// damit Gelöschtes nicht bei jedem Start wieder auftaucht.
+function ergaenzeInfos(d) {
+  const neu = INFOS.filter((i) => !d.infosGesehen.includes(i.key));
+  if (neu.length === 0) return false;
+  d.notes.unshift(...neu.map((i) => ({ id: uid(), text: i.icon + " " + i.text })));
+  d.infosGesehen.push(...neu.map((i) => i.key));
+  return true;
+}
+
+// Überholte Einträge einmalig entfernen (gemerkt als "-entfernt" in infosGesehen)
+function entferneAlteInfos(d) {
+  let geaendert = false;
+  for (const alt of INFOS_ENTFERNT) {
+    const marke = alt.key + "-entfernt";
+    if (d.infosGesehen.includes(marke)) continue;
+    d.notes = d.notes.filter((n) => !n.text.includes(alt.steckt));
+    d.infosGesehen.push(marke);
+    geaendert = true;
+  }
+  return geaendert;
+}
+
+function pflegeInfos(d) {
+  const a = entferneAlteInfos(d);
+  const b = ergaenzeInfos(d);
+  return a || b;
 }
 
 function load() {
@@ -41,12 +72,15 @@ function load() {
   } catch {
     d = null;
   }
-  const neu = d === null;
   const daten = normalisiere(d);
-  // "Gut zu wissen": beim allerersten Start mit den Standard-Infos befüllen,
-  // danach lebt die Liste im localStorage und ist frei editierbar
-  if (neu) {
-    daten.notes = INFOS.map((i) => ({ id: uid(), text: i.icon + " " + i.text }));
+  // "Gut zu wissen": beim ersten Start alle Standard-Infos, später nur neu
+  // hinzugekommene. Danach lebt die Liste im localStorage und ist frei editierbar.
+  if (pflegeInfos(daten)) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(daten));
+    } catch {
+      /* egal – beim nächsten Speichern landet es ohnehin drin */
+    }
   }
   return daten;
 }
@@ -56,8 +90,9 @@ function save() {
 }
 
 let data = load();
-// home | routine | shopping | lists | listDetail | weight | calendar | notes | backup
+// home | routine | steps | shopping | lists | listDetail | calendar | notes | backup
 let view = "home";
+let rueckweg = null; // Ansicht, zu der "Zurück" führt, wenn man aus der Routine abgebogen ist
 let activeListId = null;
 let zeigeVorschlaege = false;
 let zeigeAlleAbfuhr = false;
@@ -127,48 +162,7 @@ function abfuhrReichweite() {
   return rest <= 28 ? Math.max(rest, 0) : null;
 }
 
-// ---- 3. Gewicht & Termine ----
-const letztesGewicht = () => data.weights[0] ?? null;
-
-const gewichtsWarnung = () => {
-  const g = letztesGewicht();
-  return g !== null && g.kg > 75;
-};
-
-// Schnelle Zunahme ist das eigentliche Alarmsignal für Wassereinlagerung:
-// niedrigsten Wert der letzten 4 Tage mit dem aktuellen vergleichen.
-function trendWarnung() {
-  const neu = letztesGewicht();
-  if (!neu) return null;
-  let tief = null;
-  for (let i = 1; i < data.weights.length; i++) {
-    const alt = data.weights[i];
-    const t = tageDiff(neu.date, alt.date);
-    if (t <= 0) continue;
-    if (t > 4) break;
-    if (!tief || alt.kg < tief.kg) tief = alt;
-  }
-  if (!tief) return null;
-  const diff = Math.round((neu.kg - tief.kg) * 10) / 10;
-  if (diff < 1) return null;
-  return { diff: diff, tage: tageDiff(neu.date, tief.date) };
-}
-
-// Erinnerung ans Wiegen (laut Routine jeden 2. Tag)
-function tageSeitWiegen() {
-  const g = letztesGewicht();
-  return g ? tageDiff(dateStr(), g.date) : null;
-}
-
-function fmtKg(kg) {
-  return kg.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " kg";
-}
-
-function fmtDiff(diff) {
-  return (diff > 0 ? "+" : "") +
-    diff.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-}
-
+// ---- 3. Termine ----
 function naechsterTermin() {
   const heute = dateStr();
   return (
@@ -176,6 +170,15 @@ function naechsterTermin() {
       .filter((e) => e.date >= heute)
       .sort((a, b) => a.date.localeCompare(b.date))[0] ?? null
   );
+}
+
+// Nächste Kalenderwoche (Montag bis Sonntag) als { von, bis } im Format JJJJ-MM-TT
+function naechsteWoche() {
+  const t = new Date();
+  const bisMontag = (8 - t.getDay()) % 7 || 7;
+  const mo = new Date(t.getFullYear(), t.getMonth(), t.getDate() + bisMontag);
+  const so = new Date(mo.getFullYear(), mo.getMonth(), mo.getDate() + 6);
+  return { von: dateStr(mo), bis: dateStr(so) };
 }
 
 // ---- 4. DOM-Referenzen & Helfer ----
@@ -193,6 +196,40 @@ function el(tag, cls, text) {
   if (cls) n.className = cls;
   if (text !== undefined) n.textContent = text;
   return n;
+}
+
+// Text mit antippbaren Telefonnummern: Tippen ruft an, daneben ein Kopier-Knopf
+// (z. B. am Computer oder wenn man die Nummer weitergeben will).
+const TELEFON_MUSTER = /\+?\d[\d /-]{4,}\d/g;
+
+function textMitTelefon(text) {
+  const frag = document.createDocumentFragment();
+  let pos = 0;
+  for (const m of text.matchAll(TELEFON_MUSTER)) {
+    frag.append(text.slice(pos, m.index));
+    const nummer = m[0];
+    const wahl = nummer.replace(/[^\d+]/g, "");
+    const link = el("a", "tel-link", nummer);
+    link.href = "tel:" + wahl;
+    const kopie = el("button", "tel-copy", "Kopieren");
+    kopie.setAttribute("aria-label", nummer + " kopieren");
+    kopie.addEventListener("click", () => kopiere(wahl, "Nummer kopiert"));
+    frag.append(link, " ", kopie);
+    pos = m.index + nummer.length;
+  }
+  frag.append(text.slice(pos));
+  return frag;
+}
+
+function kopiere(text, meldung) {
+  if (!navigator.clipboard) {
+    toast("Kopieren nicht möglich");
+    return;
+  }
+  navigator.clipboard
+    .writeText(text)
+    .then(() => toast(meldung))
+    .catch(() => toast("Kopieren nicht möglich"));
 }
 
 // Kurzes Tacken beim Abhaken – auf Android spürbar, sonst wirkungslos
@@ -242,7 +279,6 @@ function setChrome(opts) {
   backBtn.hidden = !opts.zurueck;
   footerEl.hidden = !opts.footer;
   if (opts.placeholder) inputEl.placeholder = opts.placeholder;
-  inputEl.inputMode = opts.inputmode ?? "text"; // "decimal" -> Zahlentastatur am Handy
   aktualisiereAktion();
 }
 
@@ -269,15 +305,42 @@ const aktuellerLauf = () =>
 function starteLauf() {
   data.run = { date: dateStr(), idx: 0, res: {}, sub: {} };
   save();
+  rueckweg = null;
   view = "routine";
   render();
 }
 
-function schrittWeiter(ergebnis) {
+// Nur Ergebnisse von Schritten zählen, die es (noch) gibt
+const bearbeiteteSchritte = (lauf) => ROUTINE.filter((s) => lauf.res[s.id]).length;
+
+// Nach dem Abhaken zum nächsten offenen Schritt – auch wenn man vorher
+// über die Übersicht gesprungen ist. Ist alles bearbeitet: Abschluss.
+function schrittWeiter(erg) {
   const lauf = aktuellerLauf();
-  lauf.res[ROUTINE[lauf.idx].id] = ergebnis;
-  lauf.idx++;
+  lauf.res[ROUTINE[lauf.idx].id] = erg;
+  let naechster = ROUTINE.length;
+  for (let k = 1; k <= ROUTINE.length; k++) {
+    const i = (lauf.idx + k) % ROUTINE.length;
+    if (!lauf.res[ROUTINE[i].id]) { naechster = i; break; }
+  }
+  lauf.idx = naechster;
   save();
+  render();
+}
+
+// Aus der Schritt-Übersicht direkt zu einem Schritt springen
+function springeZuSchritt(i) {
+  if (!aktuellerLauf()) data.run = { date: dateStr(), idx: 0, res: {}, sub: {} };
+  data.run.idx = i;
+  save();
+  rueckweg = null;
+  view = "routine";
+  render();
+}
+
+function oeffneAusRoutine(ziel) {
+  rueckweg = "routine";
+  view = ziel;
   render();
 }
 
@@ -384,14 +447,14 @@ function backupEinlesen(text) {
     return;
   }
   const roh = obj && typeof obj === "object" && obj.data ? obj.data : obj;
-  const felder = ["lists", "shopping", "weights", "events", "notes"];
+  const felder = ["lists", "shopping", "events", "notes"];
   if (!roh || typeof roh !== "object" || !felder.some((k) => Array.isArray(roh[k]))) {
     toast("Das ist keine gültige Sicherung");
     return;
   }
   const neu = normalisiere(roh);
+  pflegeInfos(neu);
   const zusammenfassung =
-    neu.weights.length + " Gewichtseinträge, " +
     neu.events.length + " Termine, " +
     neu.shopping.length + " Einkaufseinträge, " +
     neu.lists.length + " eigene Listen, " +
@@ -428,10 +491,10 @@ function render() {
   mainEl.innerHTML = "";
   if (view === "home") renderHome();
   else if (view === "routine") renderRoutine();
+  else if (view === "steps") renderSteps();
   else if (view === "shopping") renderShopping();
   else if (view === "lists") renderLists();
   else if (view === "listDetail") renderListDetail();
-  else if (view === "weight") renderWeight();
   else if (view === "calendar") renderCalendar();
   else if (view === "notes") renderNotes();
   else if (view === "backup") renderBackup();
@@ -459,52 +522,24 @@ function toggleZeile(li, traeger, schluessel) {
 function renderHome() {
   setChrome({ titel: "Opas Haushalt", zurueck: false, footer: false });
 
-  // Warnung, solange der letzte Gewichtseintrag über 75 kg liegt
-  if (gewichtsWarnung()) {
-    const warn = el("button", "card warn-card");
-    warn.append(el("div", "warn-title", "⚠️ Opa braucht zusätzliche Entwässerungstabletten"));
-    warn.append(el("div", "warn-sub", "Letztes Gewicht: " + fmtKg(letztesGewicht().kg) + " – antippen für die Gewichtsliste"));
-    warn.addEventListener("click", () => { view = "weight"; render(); });
-    mainEl.append(warn);
-  }
-
-  // Schnelle Zunahme – unabhängig vom absoluten Gewicht
-  const trend = trendWarnung();
-  if (trend) {
-    const warn = el("button", "card warn-card");
-    warn.append(el("div", "warn-title", "⚠️ " + fmtDiff(trend.diff) + " kg in " + fmtTage(trend.tage)));
-    warn.append(el("div", "warn-sub", "Schnelle Zunahme spricht für Wassereinlagerung – Beine anschauen, bei Mama nachfragen."));
-    warn.addEventListener("click", () => { view = "weight"; render(); });
-    mainEl.append(warn);
-  }
-
-  // Ans Wiegen erinnern (laut Routine jeden 2. Tag)
-  const seit = tageSeitWiegen();
-  if (seit !== null && seit >= 3) {
-    const hint = el("button", "card note-card");
-    hint.append(el("div", "note-title", "⚖️ Seit " + fmtTage(seit) + " nicht gewogen"));
-    hint.append(el("div", "note-sub", "Eigentlich jeden 2. Tag – antippen zum Eintragen."));
-    hint.addEventListener("click", () => { view = "weight"; render(); });
-    mainEl.append(hint);
-  }
-
   // Besuchs-Routine – der Grund, warum man die App überhaupt aufmacht
   const rout = el("section", "card hero");
   const lauf = aktuellerLauf();
   rout.append(el("div", "hero-label", "Besuchs-Routine"));
   if (lauf && lauf.idx >= ROUTINE.length) {
-    const erledigt = Object.values(lauf.res).filter((r) => r === "done").length;
+    const erledigt = ROUTINE.filter((s) => lauf.res[s.id] === "done").length;
     rout.append(el("h2", "hero-title", "Heute geschafft ✓"));
     rout.append(el("p", "hero-sub", erledigt + " von " + ROUTINE.length + " Schritten erledigt."));
     const nochmal = el("button", "btn ghost", "Nochmal durchgehen");
     nochmal.addEventListener("click", starteLauf);
     rout.append(nochmal);
   } else if (lauf) {
-    rout.append(el("h2", "hero-title", "Schritt " + (lauf.idx + 1) + " von " + ROUTINE.length));
-    rout.append(el("p", "hero-sub", "Du warst schon dabei – einfach weitermachen."));
+    const fertig = bearbeiteteSchritte(lauf);
+    rout.append(el("h2", "hero-title", fertig + " von " + ROUTINE.length + " Schritten erledigt"));
+    rout.append(el("p", "hero-sub", "Als Nächstes: " + ROUTINE[lauf.idx].title));
     const prog = el("div", "progress");
     const fill = el("div", "progress-fill");
-    fill.style.width = Math.round((lauf.idx / ROUTINE.length) * 100) + "%";
+    fill.style.width = Math.round((fertig / ROUTINE.length) * 100) + "%";
     prog.append(fill);
     rout.append(prog);
     const weiter = el("button", "btn primary", "Fortsetzen");
@@ -512,11 +547,14 @@ function renderHome() {
     rout.append(weiter);
   } else {
     rout.append(el("h2", "hero-title", "Heute noch nicht gestartet"));
-    rout.append(el("p", "hero-sub", ROUTINE.length + " Schritte – vom Getränk bis zum Ladekabel-Check."));
+    rout.append(el("p", "hero-sub", ROUTINE.length + " Schritte – vom Hörbuch bis zum Kalender-Check."));
     const start = el("button", "btn primary", "Routine starten");
     start.addEventListener("click", starteLauf);
     rout.append(start);
   }
+  const alle = el("button", "btn ghost", "Alle Schritte ansehen");
+  alle.addEventListener("click", () => { view = "steps"; render(); });
+  rout.append(alle);
   mainEl.append(rout);
 
   // Mülltonnen
@@ -551,12 +589,6 @@ function renderHome() {
     render();
   }));
 
-  const g = letztesGewicht();
-  gruppe.append(navRow("Gewichtsliste", g ? "zuletzt " + fmtKg(g.kg) + " (" + fmtDate(g.date) + ")" : "noch kein Eintrag", () => {
-    view = "weight";
-    render();
-  }));
-
   const anz = data.lists.length;
   gruppe.append(navRow("Eigene Listen", anz ? anz + (anz === 1 ? " Liste" : " Listen") : "noch keine", () => {
     view = "lists";
@@ -577,7 +609,11 @@ function renderHome() {
     info.append(el("p", "muted", "Keine Einträge – über „Bearbeiten“ etwas hinzufügen."));
   }
   for (const n of data.notes) {
-    info.append(el("div", "info-row", n.text));
+    const zeile = el("div", "info-row");
+    const txt = el("span"); // eigener Textblock, damit Link & Knopf im Fließtext bleiben
+    txt.append(textMitTelefon(n.text));
+    zeile.append(txt);
+    info.append(zeile);
   }
   mainEl.append(info);
 
@@ -645,17 +681,32 @@ function renderRoutine() {
     footer: false,
   });
 
-  // Fortschrittsbalken
+  // Fortschritt + Sprung in die Übersicht aller Schritte
+  const kopf = el("div", "step-head");
   const prog = el("div", "progress");
   const fill = el("div", "progress-fill");
-  fill.style.width = Math.round((lauf.idx / ROUTINE.length) * 100) + "%";
+  fill.style.width = Math.round((bearbeiteteSchritte(lauf) / ROUTINE.length) * 100) + "%";
   prog.append(fill);
-  mainEl.append(prog);
+  const alle = el("button", "step-overview-link", "Alle Schritte");
+  alle.addEventListener("click", () => oeffneAusRoutine("steps"));
+  kopf.append(prog, alle);
+  mainEl.append(kopf);
 
   // Schritt-Karte
   const card = el("section", "card step-card");
+  const bisher = lauf.res[schritt.id];
+  if (bisher) {
+    card.append(el("span", "badge step-badge", bisher === "done" ? "schon erledigt" : "vorhin übersprungen"));
+  }
   card.append(el("h2", "step-title", schritt.title));
   if (schritt.detail) card.append(el("p", "step-detail", schritt.detail));
+  if (schritt.punkte) {
+    const pl = el("ul", "step-points");
+    for (const p of schritt.punkte) pl.append(el("li", null, p));
+    card.append(pl);
+  }
+
+  if (schritt.dynamic === "kalender") card.append(kalenderBox());
 
   if (schritt.dynamic === "muell") {
     const box = el("div", "muell-box");
@@ -692,6 +743,84 @@ function renderRoutine() {
   skip.addEventListener("click", () => schrittWeiter("skip"));
   actions.append(done, skip);
   mainEl.append(actions);
+}
+
+// Kalender-Schritt: eigene Termine der nächsten Woche + Hinweis auf den 15.
+function kalenderBox() {
+  const box = el("div", "kalender-box");
+  const woche = naechsteWoche();
+  box.append(el("p", "section-label kalender-label",
+    "Nächste Woche · " + fmtDate(woche.von) + " – " + fmtDate(woche.bis)));
+
+  const termine = data.events
+    .filter((e) => e.date >= woche.von && e.date <= woche.bis)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  if (termine.length === 0) {
+    box.append(el("p", "muted small", "In der App ist für nächste Woche nichts eingetragen."));
+  }
+  for (const e of termine) {
+    const row = el("div", "abfuhr-row");
+    const info = el("div", "abfuhr-info");
+    info.append(el("div", "abfuhr-label", e.text), el("div", "muted small", fmtDate(e.date)));
+    row.append(info);
+    box.append(row);
+  }
+
+  // Liegt ein 15. in der nächsten Woche? Dann ist Bettwäsche dran.
+  for (let d = alsDatum(woche.von); dateStr(d) <= woche.bis; d.setDate(d.getDate() + 1)) {
+    if (d.getDate() !== 15) continue;
+    const hinweis = el("div", "card note-card kalender-hinweis");
+    hinweis.append(el("div", "note-title", "🛏️ " + fmtDate(dateStr(d)) + " ist der 15."));
+    hinweis.append(el("div", "note-sub", "Bettwäsche wechseln mit eintragen!"));
+    box.append(hinweis);
+  }
+
+  const oeffnen = el("button", "chips-toggle", "Termine in der App öffnen ›");
+  oeffnen.addEventListener("click", () => oeffneAusRoutine("calendar"));
+  box.append(oeffnen);
+  return box;
+}
+
+// --- Ansicht: alle Schritte auf einen Blick ---
+function renderSteps() {
+  const lauf = aktuellerLauf();
+  setChrome({ titel: "Alle Schritte", zurueck: true, footer: false });
+
+  mainEl.append(el("p", "muted small hint",
+    lauf
+      ? "Antippen, um direkt zu diesem Schritt zu springen. Was schon erledigt ist, bleibt erledigt."
+      : "Antippen, um die Routine bei diesem Schritt zu beginnen."));
+
+  const ul = el("ul", "step-list");
+  ROUTINE.forEach((s, i) => {
+    const erg = lauf ? lauf.res[s.id] : null;
+    const aktuell = !!lauf && lauf.idx === i;
+    const li = el("li", "row step-row" +
+      (erg === "done" ? " done" : "") +
+      (erg === "skip" ? " skipped" : "") +
+      (aktuell ? " current" : ""));
+    const main = el("button", "row-main");
+    main.append(el("span", "step-num", erg === "done" ? "✓" : String(i + 1)));
+    const info = el("div", "step-row-info");
+    info.append(el("div", "item-text", s.title));
+    const unter = [];
+    if (aktuell) unter.push("du bist hier");
+    if (erg === "done") unter.push("erledigt");
+    if (erg === "skip") unter.push("übersprungen");
+    if (s.items) unter.push(s.items.length + " Punkte");
+    if (unter.length) info.append(el("div", "muted small", unter.join(" · ")));
+    main.append(info, el("span", "chevron", "›"));
+    main.addEventListener("click", () => springeZuSchritt(i));
+    li.append(main);
+    ul.append(li);
+  });
+  mainEl.append(ul);
+
+  if (!lauf) {
+    const start = el("button", "btn primary", "Routine von vorn starten");
+    start.addEventListener("click", starteLauf);
+    mainEl.append(start);
+  }
 }
 
 // --- Ansicht: Einkaufsliste ---
@@ -748,61 +877,6 @@ function renderShopping() {
     li.append(main, del);
     ul.append(li);
   }
-  mainEl.append(ul);
-}
-
-// --- Ansicht: Gewichtsliste ---
-function renderWeight() {
-  setChrome({
-    titel: "Gewichtsliste",
-    zurueck: true,
-    footer: true,
-    placeholder: "Gewicht in kg, z. B. 74,5",
-    inputmode: "decimal",
-  });
-
-  if (gewichtsWarnung()) {
-    const warn = el("div", "card warn-card");
-    warn.append(el("div", "warn-title", "⚠️ Opa braucht zusätzliche Entwässerungstabletten"));
-    warn.append(el("div", "warn-sub", "Letztes Gewicht: " + fmtKg(letztesGewicht().kg)));
-    mainEl.append(warn);
-  }
-
-  const trend = trendWarnung();
-  if (trend) {
-    const warn = el("div", "card warn-card");
-    warn.append(el("div", "warn-title", "⚠️ " + fmtDiff(trend.diff) + " kg in " + fmtTage(trend.tage)));
-    warn.append(el("div", "warn-sub", "Schnelle Zunahme spricht für Wassereinlagerung – Beine anschauen, bei Mama nachfragen."));
-    mainEl.append(warn);
-  }
-
-  const seit = tageSeitWiegen();
-  if (seit !== null && seit >= 3) {
-    const hint = el("div", "card note-card");
-    hint.append(el("div", "note-title", "⚖️ Seit " + fmtTage(seit) + " nicht gewogen"));
-    mainEl.append(hint);
-  }
-
-  mainEl.append(el("p", "muted small hint", "Jeden 2. Tag wiegen. Schnelle Zunahme ist meist Wassereinlagerung – gewarnt wird ab 75 kg und bei mehr als 1 kg Zunahme in wenigen Tagen."));
-
-  const ul = el("ul");
-  if (data.weights.length === 0) {
-    ul.append(emptyHint("Noch kein Eintrag – unten das erste Gewicht eintragen."));
-  }
-  data.weights.forEach((w, i) => {
-    const li = el("li", "row");
-    const main = el("div", "row-main static");
-    main.append(el("span", "weight-kg", fmtKg(w.kg)));
-    const aelter = data.weights[i + 1]; // Differenz zum vorherigen Eintrag
-    if (aelter) {
-      const diff = Math.round((w.kg - aelter.kg) * 10) / 10;
-      main.append(el("span", "weight-diff" + (diff > 0 ? " up" : ""), fmtDiff(diff)));
-    }
-    main.append(el("span", "count", fmtDate(w.date)));
-    const del = deleteButton(() => loescheMitUndo(data.weights, w.id, fmtKg(w.kg)));
-    li.append(main, del);
-    ul.append(li);
-  });
   mainEl.append(ul);
 }
 
@@ -929,13 +1003,12 @@ function renderBackup() {
   const info = el("section", "card");
   info.append(el("h2", "card-title", "Warum das wichtig ist"));
   info.append(el("p", "muted",
-    "Alles – Gewichtsliste, Termine, Notizen, eigene Listen – liegt nur im Speicher dieses Browsers. " +
+    "Alles – Termine, Einkaufsliste, Notizen, eigene Listen – liegt nur im Speicher dieses Browsers. " +
     "Neues Handy, gelöschte Browserdaten oder eine lange ungenutzte App: dann ist alles weg. " +
     "Schick dir ab und zu eine Sicherung, zur Not per Mail an dich selbst."));
 
   const stand = el("div", "backup-stats");
   stand.append(
-    el("div", "info-row", "⚖️ " + data.weights.length + " Gewichtseinträge"),
     el("div", "info-row", "📅 " + data.events.length + " eigene Termine"),
     el("div", "info-row", "🛒 " + data.shopping.length + " Einkaufseinträge"),
     el("div", "info-row", "📋 " + data.lists.length + " eigene Listen"),
@@ -1061,13 +1134,6 @@ function addEntry() {
     aktiveListe().items.push({ id: uid(), text: text, done: false });
   } else if (view === "notes") {
     data.notes.push({ id: uid(), text: text });
-  } else if (view === "weight") {
-    const kg = parseFloat(text.replace(",", ".")); // "74,5" -> 74.5
-    if (isNaN(kg) || kg <= 0 || kg >= 300) {
-      toast("Bitte ein Gewicht in kg eingeben, z. B. 74,5");
-      return;
-    }
-    data.weights.unshift({ id: uid(), date: dateStr(), kg: Math.round(kg * 10) / 10 });
   } else {
     return;
   }
@@ -1083,11 +1149,20 @@ inputEl.addEventListener("keydown", (e) => {
 });
 
 backBtn.addEventListener("click", () => {
+  if (rueckweg && aktuellerLauf()) {
+    // aus der Routine kurz abgebogen (Übersicht, Termine) -> zurück zum Schritt
+    view = rueckweg;
+    rueckweg = null;
+    render();
+    return;
+  }
+  rueckweg = null;
   if (view === "routine") {
+    // Einen Schritt zurück. Das Ergebnis bleibt stehen und wird beim
+    // erneuten Abhaken einfach überschrieben.
     const lauf = aktuellerLauf();
     if (lauf && lauf.idx > 0) {
-      lauf.idx--;
-      delete lauf.res[ROUTINE[lauf.idx].id];
+      lauf.idx = Math.min(lauf.idx, ROUTINE.length) - 1;
       save();
       render();
     } else {
